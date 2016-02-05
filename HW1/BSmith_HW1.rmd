@@ -1,0 +1,60 @@
+---
+title: "Homework Assignment 1"
+author: "Brendan Smith"
+date: "January 28, 2016"
+output: html_document
+---
+
+**Objective Statement:**
+
+
+**Methods:**
+  **Data:**
+  **Code:**
+  
+
+**Results:**
+testing
+
+**Discussion:**
+
+**Limitations:**
+
+```{r, echo = FALSE}
+ph <- read.csv("Trees.csv",header = TRUE,sep = ",")
+Trees.OBJECTID<-ph[,1]
+Trees.x<-ph[,2]
+Trees.y<-ph[,3]
+Trees.zm<-ph[,4]
+Trees.rm<-ph[,5]
+Trees.data<-data.frame(Trees.OBJECTID, Trees.x, Trees.y, Trees.zm, Trees.rm)
+rm(ph, Trees.x, Trees.y, Trees.zm, Trees.rm, Trees.OBJECTID)
+```
+
+```{r, echo = FALSE}
+summary(Trees.data$Trees.zm)
+hist(Trees.data$Trees.zm)
+hist(log(Trees.data$Trees.zm))
+```
+
+```{r, echo = FALSE}
+summary(Trees.data$Trees.rm)
+hist(Trees.data$Trees.rm)
+```
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

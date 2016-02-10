@@ -46,8 +46,9 @@ func = function(x) {
   maxi = max(x)
   ran = range(x)
   stan = sd(x)
+  cv = stan/avg
   
-  info <- c(minim, avg, med, maxi, ran, stan)
+  info <- c(minim, avg, med, maxi, ran, stan, cv)
   
   #print out all the calculated values in a human-readable way
   cat("Minimum: ", minim, "\n")
@@ -56,6 +57,7 @@ func = function(x) {
   cat("Maximum: ", maxi, "\n")
   cat("Range: ", ran, "\n")
   cat("Standard Deviation: ", stan, "\n")
+  cat("Coefficient of Variation: ", cv, "\n")
 
   
   return(info) #return the minimum, average, median, maximum, range and standard deviation of the dataset

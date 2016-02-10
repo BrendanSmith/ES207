@@ -6,8 +6,9 @@ func = function(x) {
   maxi = max(x)
   ran = range(x)
   stan = sd(x)
+  cv = stan/avg
   
-  info <- c(minim, avg, med, maxi, ran)
+  info <- c(minim, avg, med, maxi, ran, cv)
   
   return(info) #if applicable, return something
 }

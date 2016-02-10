@@ -2,59 +2,115 @@
 title: "Homework Assignment 1"
 author: "Brendan Smith"
 date: "January 28, 2016"
-output: html_document
+output: pdf_document
 ---
 
-**Objective Statement:**
+**Objective Statement:** In this homework assignment, the goal is to familiarize ourselves with RStudio and RMarkdown given a dataset. We will apply some fundamental statistical analysis and plots utilizing built in R functions. The dataset provided is extracted from LiDAR data collected in the Sierra Nevada mountain range. Tree height and crown radii data was extracted through post processing. We are to import the data and test against the null hypothesis: Given tree height and crown radii, there will be zero correlation between the two.
 
 
-**Methods:**
-  **Data:**
-  **Code:**
+**Methods:** First, the data is imported via the built-in `read.csv()` function. Next, a series data diagnostics are run to gather a general idea of the dataset, followed by the generation of histograms for the height and crown radii of the trees. Finally, the correlation between the tree height and crown radii is verified and presented.
   
+  
+  **Data:** The data utilized in this analysis was collected using Light Detection and Ranging (LiDAR) of the conifers that reside in the Sierra Nevada mountain range. The tree height, crown-radii, and location were exctracted from the initial LiDAR dataset. 
+  
+  
+  **Code:**
+
+```{r, echo = TRUE}
+#Read in the values from Trees.csv and place them in the variable "Trees"
+Trees <- read.csv("./Trees.csv",header = TRUE,sep = ",")
+#Use the attach() function in order to access the data arrays imported from Trees.csv with their inherited variable names from the header
+attach(Trees)
+#Assemble a data frame with the variables for good house-keeping purposes
+Trees.data<-data.frame(OBJECTID, x, y, z.m., r.m.)
+#Remove the variable "Trees"
+rm(Trees)
+```
+
+```{r, echo = TRUE}
+#Print a summary for the crown radii and tree height. This will provide the miniumum, first quartile, median, mean, third quartile and max values of the dataset.
+#Summary of Crown Radii
+summary(Trees.data$r.m.)
+#Summary of Tree Height
+summary(Trees.data$z.m.)
+```
+
+In addition to analyzing the provided dataset, we are required to create a function in order to output key data diagnostics. Below is the function:
+
+```{r}
+func = function(x) {
+  #perform the required functions
+  minim = min(x)
+  avg = mean(x)
+  med = median(x)
+  maxi = max(x)
+  ran = range(x)
+  stan = sd(x)
+  
+  info <- c(minim, avg, med, maxi, ran, stan)
+  
+  #print out all the calculated values in a human-readable way
+  cat("Minimum: ", minim, "\n")
+  cat("Mean: ", avg, "\n")
+  cat("Median: ", med, "\n")
+  cat("Maximum: ", maxi, "\n")
+  cat("Range: ", ran, "\n")
+  cat("Standard Deviation: ", stan, "\n")
+
+  
+  return(info) #return the minimum, average, median, maximum, range and standard deviation of the dataset
+}
+
+#Test the functionality by inputing the tree height data
+func(Trees.data$z.m.)
+```
+
+The function `func()` takes in a dataset, prints key data information in a human-readable form to the console, and also returns that data in an array.
+
 
 **Results:**
-testing
+
+```{r, echo = FALSE}
+#Plot four histograms: crown radii, tree height, log(crown radii), log(tree height)
+hist(Trees.data$r.m.,xlab = "Crown Radii", main = "Histogram of Crown Radii")
+hist(log(Trees.data$r.m.),xlab = "log(Crown Radii)", main = "Log Transformed - Histogram of Crown Radii")
+hist(Trees.data$z.m.,xlab = "Tree Height", main = "Histogram of Tree Height")
+hist(log(Trees.data$z.m.),xlab = "log(Tree Height)", main = "Log Transformed - Histogram of Tree Height")
+```
+
+```{r, echo = FALSE}
+#Plot the scattergram of crown radii vs. tree height. Overlay a linear regression line.
+plot(Trees.data$r.m.,Trees.data$z.m.,col="red",xlab = "Crown Radii", ylab = "Tree Height")
+abline(lm(Trees.data$z.m.~Trees.data$r.m.))
+```
+
+```{r, echo = FALSE, warning = FALSE}
+#Plot a scattergram of crown radii vs. tree height, along with the corresponding box plots for both crown radii and tree height on their respective axes.
+par(fig=c(0,0.8,0,0.8), new=TRUE)
+plot(Trees.data$r.m., Trees.data$z.m., xlab="Crown Radii", ylab="Tree Height", col = "red")
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(Trees.data$r.m., horizontal=TRUE, axes=FALSE)
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+boxplot(Trees.data$z.m., axes=FALSE)
+```
+
+```{r, echo = FALSE}
+#Calculate the Pearson's correlation coefficient
+test <- cor.test(Trees.data$r.m.,Trees.data$z.m.)
+attach(test)
+rval <-conf.int[1]
+detach(test)
+rm(test)
+```
 
 **Discussion:**
 
-**Limitations:**
-
-```{r, echo = FALSE}
-ph <- read.csv("Trees.csv",header = TRUE,sep = ",")
-Trees.OBJECTID<-ph[,1]
-Trees.x<-ph[,2]
-Trees.y<-ph[,3]
-Trees.zm<-ph[,4]
-Trees.rm<-ph[,5]
-Trees.data<-data.frame(Trees.OBJECTID, Trees.x, Trees.y, Trees.zm, Trees.rm)
-rm(ph, Trees.x, Trees.y, Trees.zm, Trees.rm, Trees.OBJECTID)
-```
-
-```{r, echo = FALSE}
-summary(Trees.data$Trees.zm)
-hist(Trees.data$Trees.zm)
-hist(log(Trees.data$Trees.zm))
-```
-
-```{r, echo = FALSE}
-summary(Trees.data$Trees.rm)
-hist(Trees.data$Trees.rm)
-```
+The uncorrected histograms indicate a left skewed distribution of tree height and tree-crown radii. Once the values are corrected using a log transformation, the histograms take on a normal distribution. This analysis shows just how powerful data transformations can be when analyzing data.
 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Plotting the tree height against the tree-crown radii with a scatterplot offers good qualitative insight to the correlation between tree height and tree-crown radii. Further analysis through the addition of a fitted line shows that the data lies along the `x=y` line. The addition of boxplots along the axes allows the viewer to visualize the distribution of each dataset while simultaneously visualizing the correlation.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r}
-summary(cars)
-```
+The calculated Pearson's correlation coefficient, or r-value, is `r rval`. This means that we have a strong positive correlation between the tree-crown radii and height, which is to be expected. This also confirms that we can reject the null hypothesis that there is no correlation between tree-crown radii and height.
 
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-plot(cars)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+**Limitations:** The most notable limitations to RMarkdown is the fact that you cannot underline or right-justify text. In terms of the data, the crown density is not taken into account when performing this analysis, and therefore could be considered an incomplete analysis.

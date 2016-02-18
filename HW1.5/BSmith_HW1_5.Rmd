@@ -1,0 +1,14 @@
+---
+title: "Homework Assignment 1.5"
+author: "Brendan Smith"
+date: "February 11, 2016"
+output: html_document
+---
+
+```{r, echo = FALSE}
+read.csv("Trees.csv", header = TRUE, sep = ",")
+inter <- subset(Trees.data, x < 708200, select = c(x, y))
+inter <- subset(inter, x > 708000, select = c(x, y))
+inter <- subset(inter, y < 4334200, select = c(x, y))
+Tr.loc <- subset(inter, y > 4334000, select = c(x, y))
+```

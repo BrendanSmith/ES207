@@ -1,8 +1,10 @@
 ---
-title: "Homework Assignment 1"
+title: "Homework Assignment"
 author: "Brendan Smith"
 date: "January 28, 2016"
-output: pdf_document
+output: 
+  pdf_document: 
+    keep_tex: yes
 ---
 
 **Objective Statement:** In this homework assignment, the goal is to familiarize ourselves with RStudio and RMarkdown given a dataset. We will apply some fundamental statistical analysis and plots utilizing built in R functions. The dataset provided is extracted from LiDAR data collected in the Sierra Nevada mountain range. Tree height and crown radii data was extracted through post processing. We are to import the data and test against the null hypothesis: Given tree height and crown radii, there will be zero correlation between the two.
@@ -23,6 +25,7 @@ Trees <- read.csv("./Trees.csv",header = TRUE,sep = ",")
 attach(Trees)
 #Assemble a data frame with the variables for good house-keeping purposes
 Trees.data<-data.frame(OBJECTID, x, y, z.m., r.m.)
+detach(Trees)
 #Remove the variable "Trees"
 rm(Trees)
 ```

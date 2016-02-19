@@ -2,27 +2,63 @@
 title: "Homework Assignment 2"
 author: "Brendan Smith"
 date: "February 16, 2016"
-output: html_document
+output: word_document
 ---
 
-```{r, echo=FALSE}
+**Objective Statement:** In this assignment, we are given a dataset of riparian field measurements from throughout northern California. These data need to be trimmed, organized and otherwise 'cleaned up' to be effectively analyzed programmatically. We aim to glean insight to the productivity of these sites through the analysis of vegetation height, breast-height diameter and frequency. Further, we will use a Chi-Squared test to validate the independence of the most frequently occuring genera and their location.
+
+**Methods:** We begin by importing the data stored in `riparian_survey.csv` via the `read.csv` function, taking care to add the prefix `./` to our file so that the path is relative to the project folder. The data are then examined and corrected using R functions. Additional meaningful project identification codes are introduced, followed by the removal of erroneous data. 
+
+Since analyzing the frequency of specific species can be cumbersome and too narrow in this instance, we analyze the frequency of genera. First, we extract the first word in the species name (the genus) and create a new column that will place the associated genus in the same row as the datum element. The frequency of the genus name is then counted using the `plyr` package, and the top five genera are extracted with frequency values.
+
+Testing for independence between the genera and measurement location involves using the Chi-square test: `chisq.test()`. However, we only want to perform the independence test on the five most frequent genera, which involves deriving a subest from the original survey data that references the predetermined top five genera. Finally, we plot the four locations from where all the measurements were taken.
+
+
+**Data:** The data utilized in this assignment were taken by means of field measurements and observations of four separate project sites in northern California. According to the assignment sheet, they were collected in order to estimate carbon stocks in raprian areas, and we can assume they are measurments taken by hand. Each datum point additionally has the field researcher's name associated.
+
+
+**Code:** I decided to write a complimentary script for this assignment. All variable assignment and functions can be found in `HW2_BSmith.R`. The first few lines of my script involve opening pertinent libraries necessary for my script. 
+```{r}
+#Run the complimentary script written for this assignment
 source("HW2_BSmith.R")
 ```
 
+**Results:** Upon importing the riparian survey data, a quick analysis of the data is done by using `str()` and `summary()` functions.
+```{r}
+str(ripdata)
+summary(ripdata)
+```
+From here, we can see that interesting data can be found in the following columns: ProjectID, Longitude, Latitude, SpeciesVarietalCode, SpeciesVarietalName, Woody_DBH_cm, and Woody_Height_m. We will begin our cleanup by creating a new column in the dataframe and assigning each ProjectID a meaningful new code. In my case, I utilized the `match` function.
 
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+After this step, all invalid data was removed through the `grepl()` function and value operations. We then utilize the `aggregate()` function to create summaries organized by project site:
 
 ```{r}
-summary(cars)
+ProjLoc
+```
+In this istance, we aggregated longitude and latitude of each project code by taking the mean of all lat/lon values and placing them in a new object named `ProjLoc`.
+
+
+Next, species selection and enumeration was performed by first extracting the genus name via `sapply()` and `strsplit`, followed by an assignment to the new column `ripdata$Genus`. The number of instances of each genus was counted by the `count()` function. The `order()` function was then used to arrange the frequency values in descending order, followed by the use of the `head()` command to only keep the five most frequent genera.
+
+```{r}
+ssgfreq
 ```
 
-You can also embed plots, for example:
 
-```{r, echo=FALSE}
-plot(cars)
+Testing for independence was performed by using the shorthand `match()` function `%n%` on the entire `ripdata` dataset, searching only for those genera that match the five previously determined. A two way table is then created via the `table()` function, followed by the `chisq.test()` analysis on the table. The chi-squared test results can be seen here:
+```{r}
+crripdata
+```
+Where we can see that `r crripdata$p.value` indicates that there is indeed independence between the location and genera.
+
+We then plot the five genera locations using the latitude and longitude values found in `ripdata`:
+```{r,echo=FALSE}
+plot(platlon,col=0)
+points(platlon, pch=c(5,2,4,3))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Finally, the dataframe is saved using the `write.csv()` function, where we must provide a dataframe and filename.
+
+**Discussion:** This lab served more so as a continution upon R tool utilization. We strengthened techniques learned in the previous labs, and were introduced to new data manipulation methods. In this assignment, I chose to create separate R file that contained all data analysis. This served to be quicker for analysis and provide a cleaner writing environment, as I can reference variables declared in the script.
+
+**Limitations:** The only limitation seen in this dataset is that there were many datapoints taken that had NULL or invalid data. This can be quite cumbersome to deal with if the dataset is larger voids are unknown.

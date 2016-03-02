@@ -2,7 +2,7 @@
 title: "Homework Assignment 2"
 author: "Brendan Smith"
 date: "February 16, 2016"
-output: word_document
+output: html_document
 ---
 
 **Objective Statement:** In this assignment, we are given a dataset of riparian field measurements from throughout northern California. These data need to be trimmed, organized and otherwise 'cleaned up' to be effectively analyzed programmatically. We aim to glean insight to the productivity of these sites through the analysis of vegetation height, breast-height diameter and frequency. Further, we will use a Chi-Squared test to validate the independence of the most frequently occuring genera and their location.
@@ -59,6 +59,6 @@ points(platlon, pch=c(5,2,4,3))
 
 Finally, the dataframe is saved using the `write.csv()` function, where we must provide a dataframe and filename.
 
-**Discussion:** This lab served more so as a continution upon R tool utilization. We strengthened techniques learned in the previous labs, and were introduced to new data manipulation methods. In this assignment, I chose to create separate R file that contained all data analysis. This served to be quicker for analysis and provide a cleaner writing environment, as I can reference variables declared in the script.
+**Discussion:**
 
-**Limitations:** The only limitation seen in this dataset is that there were many datapoints taken that had NULL or invalid data. This can be quite cumbersome to deal with if the dataset is larger voids are unknown.
+**Limitations:**

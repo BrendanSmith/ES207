@@ -1,0 +1,99 @@
+---
+title: "Homework Assignment 4"
+author: "Brendan Smith"
+date: "March 3, 2016"
+output: html_document
+---
+
+**Objective Statement:** 
+
+```{r,echo=FALSE}
+#load libraries
+library(stats)
+library(HH)
+#Load Ripdata
+rip <- read.csv("newripdata_survey.csv",sep = ",",header = TRUE)
+
+rip$htcm <- rip$Woody_Height_m*100
+```
+
+```{r}
+#Concatenate ProjCode and Plot.Name using the paste() function, typecast as a factor, then place these factors in rip$projplot
+rip$projplot <- as.factor(paste(rip$ProjCode,rip$Plot.Name)) 
+
+#use tapply() to cycle through each project plot and generate stats 
+#where ‘htcm’ is height in cm 
+ripsum <- data.frame(cbind(tapply(rip$htcm,rip$projplot,mean),tapply(rip$htcm,rip$projplot,sd),tapply(rip$htcm,rip$projplot,length))) 
+#add column names 
+#(height mean, height standard deviation, number of plots) 
+colnames(ripsum) <- c("htcmmn","htcmsd","plot.n") 
+#add a projplot column (from row names) to ripsum 
+ripsum$projplot <- as.factor(rownames(ripsum))
+```
+
+```{r}
+#subset for plots with more than one measurement 
+ripsum <- ripsum[ripsum$plot.n > 1,]
+#Add a proj column and populate with the first five letters of projplot (the ProjCode) via the substr() function. Then typecast to factor
+ripsum$proj <- as.factor(substr(ripsum$projplot,1,5))
+```
+
+```{r}
+#create list of project sites 
+projlevels <- levels(ripsum$proj) #compare a ‘for’ loop of summary 
+for (p in 1:length(projlevels)) print(summary(ripsum[ripsum$proj == projlevels[p],])) 
+#with a summary using lapply() (known as list apply) 
+lapply(projlevels, function(x) summary(ripsum[ripsum$proj == x,]))
+```
+
+```{r}
+#note that there are several ways of doing this task, but 
+#lapply() uses a list and a function to execute list items 
+#>> lapply(list, function(x) myfunction(x)) 
+#here we subset using which() where we select for x in list 
+#and then subset again randomly using sample() 
+#because these row subsets are from the vectorized data.frame 
+#it looks like this: data[which(),][sample(),] where [rows,cols] 
+nsamples <- 6 
+ripres <- lapply(projlevels, function(x) ripsum[which(ripsum$proj == x),][sample(nrow(ripsum[which(ripsum$proj == x),]),nsamples),]) 
+# combine samples by row using rbind()
+# and by calling ripres lapply function from do.call()
+ripsample <- do.call(rbind,ripres)
+summary(ripsample$proj)
+```
+
+```{r}
+#calculate CV using with(data,calc) 
+ripsample$cv <- with(ripsample, htcmsd / htcmmn)
+```
+
+```{r}
+rip.proj.cv.aov = aov(cv~proj,data=ripsample) 
+summary(rip.proj.cv.aov) 
+#compare it against 
+summary.lm(rip.proj.cv.aov) #what are the differences?
+```
+
+```{r}
+rip.proj.cv.aov.hsd <- TukeyHSD(rip.proj.cv.aov) 
+rip.proj.cv.aov.hsd
+```
+
+
+```{r}
+#ancovaplot(rip.proj.cv.aov.hsd)
+```
+
+**Methods:**
+  **Data:**
+  **Code:**
+  
+**Results:**
+
+Step 1 - Using ANOVA for future model selection
+```{r}
+plot(ripsum)
+```
+
+**Discussion:**
+**Limitations:**

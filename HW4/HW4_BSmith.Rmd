@@ -54,7 +54,7 @@ lapply(projlevels, function(x) summary(ripsum[ripsum$proj == x,]))
 #and then subset again randomly using sample() 
 #because these row subsets are from the vectorized data.frame 
 #it looks like this: data[which(),][sample(),] where [rows,cols] 
-nsamples <- 6 
+nsamples <- 6 #Set the number of samples
 ripres <- lapply(projlevels, function(x) ripsum[which(ripsum$proj == x),][sample(nrow(ripsum[which(ripsum$proj == x),]),nsamples),]) 
 # combine samples by row using rbind()
 # and by calling ripres lapply function from do.call()
@@ -73,7 +73,7 @@ summary(rip.proj.cv.aov)
 #compare it against 
 summary.lm(rip.proj.cv.aov) #what are the differences?
 ```
-
+There is no differences other than conveyed information. The p-value, degrees of freedom and residuals are all identical.
 ```{r}
 rip.proj.cv.aov.hsd <- TukeyHSD(rip.proj.cv.aov) 
 rip.proj.cv.aov.hsd

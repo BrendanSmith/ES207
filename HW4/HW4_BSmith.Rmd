@@ -81,7 +81,7 @@ rip.proj.cv.aov.hsd
 
 
 ```{r}
-#ancovaplot(rip.proj.cv.aov.hsd)
+ancovaplot(rip$htcm~rip$Woody_DBH_cm*rip$Genus,data=survey)
 ```
 
 **Methods:**

@@ -1,0 +1,79 @@
+---
+title: "Homework Assignment 5"
+author: "Brendan Smith"
+date: "April 11, 2016"
+output: html_document
+---
+
+**Objective Statement:** This homework assignment introduces the development and interaction of raster data. Rasterized data is critical to data analysis in field of land ecology, and in many fields in general. In this assignment, we will be developing a predicive model that will characterize the amount of biomass in the northern California riparian habitats that we've been studying. Through our analysis, we've come to the realization that we do not possess enough data to properly characterize the carbon stocks; however, through the use of a predictive model we can properly inform field scientists which data are assumed to be the best indicator.#read data from file (2 steps)
+
+For Mac: Open Terminal.app and execute `R CMD INSTALL [path to library]`. This will then install the downloaded package from source. An error was encourtered when attempting to install the source package for rgdal with automatic compiling, thus the binary version was downloaded and installed.
+
+```{r}
+# Load libraries
+library(rgdal)
+library(HH)
+
+# Load Ripdata and place into a dataframe
+rip <- read.csv("riparian_cleaned.csv",sep = ",",header = TRUE)
+# Add an object that scales the value of height from meters to centimeters
+rip$htcm <- rip$Woody_Height_m*100
+
+ProjLoc <- aggregate(cbind(Longitude,Latitude) ~ ProjCode,data=rip, mean)
+```
+
+
+We use the following two commands to read the data from `*.tif` files and then store the data as a projected raster:
+```{r}
+# Load the DEM
+gdal_grid = readGDAL("DEM.tif")
+dem = raster(gdal_grid) #use data as a projected raster
+plot(dem)
+
+# Create a vector to aid in plotting text for ProjLoc$ProjCode
+xtext = ProjLoc$Longitude+1
+ytext = ProjLoc$Latitude
+ytext[1] = ytext[1]+.1
+ytext[2] = ytext[2]-.2
+ytext[3] = ytext[3]+.2
+
+# Plot the ProjLoc over the DEM
+points(ProjLoc$Longitude,ProjLoc$Latitude)
+text(xtext,ytext,labels=ProjLoc$ProjCode)
+```
+
+```{r}
+gdal_grid = readGDAL("precip_8.tif")
+precip = raster(gdal_grid) #use data as a projected raster
+plot(precip)
+```
+
+```{r}
+gdal_grid = readGDAL("tmean_8.tif")
+tmean = raster(gdal_grid) #use data as a projected raster
+plot(tmean)
+```
+
+```{r}
+# x,y locations
+xy = cbind(rip$Longitude,rip$Latitude)
+
+# extract the values from the dem dataset
+evals = extract(dem,xy)
+
+# extract the values from the dem dataset
+tvals = extract(tmean,xy)
+
+# extract the values from the dem dataset
+pvals = extract(precip,xy)
+
+# Combine all new data into the dataframe
+rip$Elevation<- melt(evals,rip)
+rip$Temp_aug <- melt(tvals,rip)
+rip$Precp_aug <- melt(pvals,rip)
+
+hist(rip$Temp_aug)
+hist(rip$Elevation)
+hist(rip$Precp_aug)
+```
+

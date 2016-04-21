@@ -17,8 +17,8 @@ output: pdf_document
   
 ```{r}
 # Load libraries
-#library(stats)
-#library(HH)
+library(stats)
+library(HH)
 
 # Load Ripdata and place into a dataframe
 rip <- read.csv("newripdata_survey.csv",sep = ",",header = TRUE)
@@ -115,12 +115,12 @@ rip.cov.htdbhg <-glm(rip$htcm~rip$Woody_DBH_cm*rip$Genus)
 # Generate summary for this model
 summary(rip.cov.htdbhg)
 summary.lm(rip.cov.htdbhg)
-
-#ancovaplot(rip$htcm~rip$Woody_DBH_cm*rip$Genus,data=survey)
 ```
-The next step would be to generate an `ancovaplot()` for the two model formulations, with an without the interaction; however, the `ancovaplot()` function will always through a "subset" error for this data set for some reason.
+The next step is to generate an `ancovaplot()` for the two model formulations, with and without the interaction. We first plot the height as a 
 
 ```{r}
+ancovaplot(htcm~Woody_DBH_cm+Genus,data=rip)
+ancovaplot(htcm~Woody_DBH_cm*Genus,data=rip)
 plot(ripsum)
 ```
 

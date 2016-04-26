@@ -2,7 +2,7 @@
 title: "Homework Assignment 5"
 author: "Brendan Smith"
 date: "April 11, 2016"
-output: html_document
+output: pdf_document
 ---
 
 **Objective Statement:** This homework assignment introduces the development and interaction of raster data. Rasterized data is critical to data analysis in field of land ecology, and in many fields in general. In this assignment, we will be developing a predicive model that will characterize the amount of biomass in the northern California riparian habitats that we've been studying. Through our analysis, we've come to the realization that we do not possess enough data to properly characterize the carbon stocks; however, through the use of a predictive model we can properly inform field scientists which data are assumed to be the best indicator.#read data from file (2 steps)
@@ -13,6 +13,9 @@ For Mac: Open Terminal.app and execute `R CMD INSTALL [path to library]`. This w
 # Load libraries
 library(rgdal)
 library(HH)
+library(reshape2)
+library(stats)
+library(raster)
 
 # Load Ripdata and place into a dataframe
 rip <- read.csv("riparian_cleaned.csv",sep = ",",header = TRUE)
@@ -46,12 +49,34 @@ text(xtext,ytext,labels=ProjLoc$ProjCode)
 gdal_grid = readGDAL("precip_8.tif")
 precip = raster(gdal_grid) #use data as a projected raster
 plot(precip)
+
+# Create a vector to aid in plotting text for ProjLoc$ProjCode
+xtext = ProjLoc$Longitude+.5
+ytext = ProjLoc$Latitude
+ytext[1] = ytext[1]+.1
+ytext[2] = ytext[2]-.2
+ytext[3] = ytext[3]+.2
+
+# Plot the ProjLoc over the DEM
+points(ProjLoc$Longitude,ProjLoc$Latitude)
+text(xtext,ytext,labels=ProjLoc$ProjCode)
 ```
 
 ```{r}
 gdal_grid = readGDAL("tmean_8.tif")
 tmean = raster(gdal_grid) #use data as a projected raster
 plot(tmean)
+
+# Create a vector to aid in plotting text for ProjLoc$ProjCode
+xtext = ProjLoc$Longitude+1
+ytext = ProjLoc$Latitude
+ytext[1] = ytext[1]+.1
+ytext[2] = ytext[2]-.2
+ytext[3] = ytext[3]+.2
+
+# Plot the ProjLoc over the DEM
+points(ProjLoc$Longitude,ProjLoc$Latitude)
+text(xtext,ytext,labels=ProjLoc$ProjCode)
 ```
 
 ```{r}
@@ -68,12 +93,73 @@ tvals = extract(tmean,xy)
 pvals = extract(precip,xy)
 
 # Combine all new data into the dataframe
-rip$Elevation<- melt(evals,rip)
-rip$Temp_aug <- melt(tvals,rip)
-rip$Precp_aug <- melt(pvals,rip)
+rip$Elevation <- evals
+rip$Temp_aug <- tvals
+rip$Precp_aug <- pvals
+```
 
+```{r}
+# Exploratory data analysis
+summary(rip$Temp_aug)
 hist(rip$Temp_aug)
+
+summary(rip$Elevation)
 hist(rip$Elevation)
+
+summary(rip$Precp_aug)
 hist(rip$Precp_aug)
 ```
 
+
+```{r}
+# Build Linear models for each predictor
+lm.prede <-lm(htcm~Woody_DBH_cm*Genus+Elevation,data=rip)
+lm.predp <-lm(htcm~Woody_DBH_cm*Genus+Precp_aug,data=rip)
+lm.predt <-lm(htcm~Woody_DBH_cm*Genus+Temp_aug,data=rip)
+lm.predl <-lm(htcm~Woody_DBH_cm*Genus+Latitude,data=rip)
+lm.base <-lm(htcm~Woody_DBH_cm*Genus,data=rip)
+
+esum <- summary.lm(lm.prede)
+psum <- summary.lm(lm.predp) # Best model
+tsum <- summary.lm(lm.predt)
+lsum <- summary.lm(lm.predl)
+bsum <- summary(lm.base)
+```
+
+Step 3 - Predicting Carbon
+```{r}
+# Load new data to compare to predicted model
+data <- read.csv("new_data.csv",sep = ",",header = TRUE)
+
+# x,y locations
+xy = cbind(data$Longitude,data$Latitude)
+
+# extract the values from the dem dataset
+Precp_aug = extract(precip,xy)
+
+# Combine all new data into the dataframe
+data$Precp_aug <- Precp_aug
+
+with(rip,plot(Woody_DBH_cm,htcm))
+abline(lm.predp,col="red")
+#lm1=lm(htcm~Woody_DBH_cm*Genus,data=rip)
+lm1.pred.y <-predict(lm.predp,data)
+points(data$Woody_DBH_cm,lm1.pred.y,col="blue",lwd=3)
+```
+
+One hectare is equavalent to `10,000` squared meters. We extrapolate our calculation from `100` squared meters to estimate the volume of trees at one hectare. This is then multiplied by the density of carbon in order to calculate the Mg of C per hectare.
+
+```{r}
+# Calculating the carbon
+
+C = 705*(0.0000334750*data$Woody_DBH_cm^2.33631)*lm1.pred.y^0.74872 # Calculate the Volume for each individual tree
+TV = sum(C) # Calculate the sum of the tree volume
+TVpH = (TV/(100))*(10000/1)
+MgCpH = (TVpH*.6)*.50/1e6 # The density of wood is about 0.6 g/cm^3 []
+```
+
+The estimated biomass for the new site is approximately `r format(round(MgCpH, 3), nsmall = 3)` Mg of C per hectare.
+
+
+**References**
+https://scied.ucar.edu/sites/default/files/images/long-content-page/Carbon%2BStored%2Bin%2BTrees%2Bby%2BSize-Table.pdf

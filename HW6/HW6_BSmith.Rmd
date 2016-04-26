@@ -1,0 +1,13 @@
+---
+title: "Assignment 6: Multivariate Data Mining"
+author: "Brendan Smith"
+date: "April 25, 2016"
+output: html_document
+---
+
+**Objective Statement:** 
+
+**Methods:** 
+
+```{r setup, include=FALSE}
+```

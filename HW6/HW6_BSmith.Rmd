@@ -1,8 +1,8 @@
 ---
-title: "Assignment 6: Multivariate Data Mining"
+title: 'Assignment 6: Multivariate Data Mining'
 author: "Brendan Smith"
 date: "April 25, 2016"
-output: html_document
+output: pdf_document
 ---
 
 **Objective Statement:** 
@@ -10,4 +10,116 @@ output: html_document
 **Methods:** 
 
 ```{r setup, include=FALSE}
+# Include libraries
+library(foreign)
+library(raster)
+library(rgdal)
+library(stats)
+
+mdws<-read.dbf("Sierra_Nevada_MultiSource_Meadow_Polygons_Compilation_v1.dbf")
+View(mdws)
+
+mdwhgm<-mdws[!is.na(mdws[,"HGM_TYPE"]),]
 ```
+
+The function `is.na()` is the 'Not Available' function, which checks the dataframe to see where those elements are missing. Prepending the `!` operator to `is.na()` causes the function to return the element indeces that do in fact contain the value or characters placed in the 'Not Available' function. Thus, in this instance, we search for `HGM_TYPE` and create a new dataframe that only contains the rows that contain a a recorded hydrogeomorphic type.
+
+We now add new columns to the newly created dataframe that are slightly more meaninful and easily discerned:
+```{r}
+# Suggested additions
+mdwhgm$area.sqkm = mdwhgm[,"Shape_Area"]/1000000 # m^2 to km^2
+mdwhgm$catch.sqkm = mdwhgm[,"CATCHMENT_"]/1000000# m^2 to km^2
+mdwhgm$elev_m = mdwhgm[,"ELEV_MEAN"]
+mdwhgm$elev_r = mdwhgm[,"ELEV_RANGE"]
+mdwhgm$lat_dd = mdwhgm[,"LAT_DD"]
+mdwhgm$lon_dd = mdwhgm[,"LONG_DD"]
+mdwhgm$slope.pct = mdwhgm[,"FLOW_SLOPE"]
+mdwhgm$edge.comp = mdwhgm[,"EDGE_COMPL"]
+mdwhgm$clay = mdwhgm[,"ClayTot_r"]
+mdwhgm$soil.kf = mdwhgm[,"Kf"]
+
+# Additional meaningful columns
+
+```
+ 
+
+```{r}
+# EDA
+summary(mdwhgm)
+boxplot(mdwhgm)
+
+#Optional method for keeping track of the relevant variables
+rel_cols = c("area.sqkm", "catch.sqkm", "elev_m", "elev_r", "lat_dd", "lon_dd", "slope.pct", "edge.comp", "clay", "soil.kf")
+
+rmdwhgm <-mdwhgm[,rel_cols]
+
+```
+
+```{r, fig.width=9, fig.height=9}
+plot(rmdwhgm)
+```
+
+Most Variability:
+Elev Mean & Lat
+Soil
+Lat
+Lon
+Elev mean
+
+Correlated:
+Soil & Clay
+Lat & Clay
+Lat & Elev Mean
+elev mean & Lon
+Edge & Elev Range
+Elev Mean & Lon
+Elev Mean & Clay
+
+##Step 2 - Clustering and Clustering Output
+
+```{r}
+# Heirarchical Clustering
+#dist using euclidean
+rmdwhgm.dist<- dist(x = rmdwhgm[,rel_cols],method = "euclidean") #hclust using ward.D
+rmdwhgm.hc<- hclust(rmdwhgm.dist,method="ward.D")
+rect.hclust(rmdwhgm.hc,k=6)
+```
+
+
+```{r}
+# k-means Clustering
+rmdwhgm$hc6 <- cutree(rmdwhgm.hc, k=6) #store group # in hc6
+rmdwhgm.km6 <- kmeans(rmdwhgm[,rel_cols],centers = 6)
+rmdwhgm$km6 <- rmdwhgm.km6$cluster #store group # in km6
+table(rmdwhgm$hc6, rmdwhgm$km6)
+```
+
+
+```{r, fig.width=9, fig.height=9}
+# Load the DEM
+gdal_grid = readGDAL("DEM.tif")
+dem = raster(gdal_grid) #use data as a projected raster
+plot(dem,col=gray.colors(10, start=0.9, end=0.3))
+
+# Create a vector to aid in plotting text for ProjLoc$ProjCode
+xtext = rmdwhgm$lon_dd
+ytext = rmdwhgm$lat_dd
+
+# Plot the ProjLoc over the DEM
+points(rmdwhgm$lon_dd,rmdwhgm$lat_dd,pch=19,col=rmdwhgm$hc6)
+legend("topright",legend=levels(as.factor(rmdwhgm$hc6)),col=1:length(rmdwhgm$hc6),pch=19)
+```
+
+
+```{r, fig.width=9, fig.height=9}
+plot(dem,col=gray.colors(10, start=0.9, end=0.3))
+
+# Create a vector to aid in plotting text for ProjLoc$ProjCode
+xtext = rmdwhgm$lon_dd
+ytext = rmdwhgm$lat_dd
+
+# Plot the ProjLoc over the DEM
+points(rmdwhgm$lon_dd,rmdwhgm$lat_dd,pch=19,col=rmdwhgm$km6)
+legend("topright",legend=levels(as.factor(rmdwhgm$km6)),col=1:length(rmdwhgm$km6),pch=19)
+```
+

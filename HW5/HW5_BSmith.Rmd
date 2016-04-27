@@ -5,9 +5,9 @@ date: "April 11, 2016"
 output: pdf_document
 ---
 
-**Objective Statement:** This homework assignment introduces the development and interaction of raster data. Rasterized data is critical to data analysis in field of land ecology, and in many fields in general. In this assignment, we will be developing a predicive model that will characterize the amount of biomass in the northern California riparian habitats that we've been studying. Through our analysis, we've come to the realization that we do not possess enough data to properly characterize the carbon stocks; however, through the use of a predictive model we can properly inform field scientists which data are assumed to be the best indicator.#read data from file (2 steps)
+**Objective Statement:** This homework assignment introduces the development and interaction of raster data. Rasterized data is critical to data analysis in field of land ecology, and in many fields in general. In this assignment, we will be developing a predictive model that will characterize the amount of biomass in the northern California riparian habitats that we've been studying. Through our analysis, we've come to the realization that we do not possess enough data to properly characterize the carbon stocks; however, through the use of a predictive model we can properly inform field scientists which data are assumed to be the best indicator.#read data from file (2 steps)
 
-For Mac: Open Terminal.app and execute `R CMD INSTALL [path to library]`. This will then install the downloaded package from source. An error was encourtered when attempting to install the source package for rgdal with automatic compiling, thus the binary version was downloaded and installed.
+For Mac: Open Terminal.app and execute `R CMD INSTALL [path to library]`. This will then install the downloaded package from source. An error was encountered when attempting to install the source package for rgdal with automatic compiling, thus the binary version was downloaded and installed.
 
 ```{r}
 # Load libraries
@@ -26,6 +26,9 @@ ProjLoc <- aggregate(cbind(Longitude,Latitude) ~ ProjCode,data=rip, mean)
 ```
 
 
+**Methods**
+**Data**
+**Code**
 We use the following two commands to read the data from `*.tif` files and then store the data as a projected raster:
 ```{r}
 # Load the DEM
@@ -42,7 +45,7 @@ ytext[3] = ytext[3]+.2
 
 # Plot the ProjLoc over the DEM
 points(ProjLoc$Longitude,ProjLoc$Latitude)
-text(xtext,ytext,labels=ProjLoc$ProjCode)
+text(xtext,ytext,labels=ProjLoc$ProjCode,cex=.6)
 ```
 
 ```{r}
@@ -53,13 +56,14 @@ plot(precip)
 # Create a vector to aid in plotting text for ProjLoc$ProjCode
 xtext = ProjLoc$Longitude+.5
 ytext = ProjLoc$Latitude
-ytext[1] = ytext[1]+.1
-ytext[2] = ytext[2]-.2
-ytext[3] = ytext[3]+.2
+ytext[1] = ytext[1]+.3
+ytext[2] = ytext[2]-.3
+ytext[3] = ytext[3]+.3
+ytext[4] = ytext[4]+.3
 
 # Plot the ProjLoc over the DEM
 points(ProjLoc$Longitude,ProjLoc$Latitude)
-text(xtext,ytext,labels=ProjLoc$ProjCode)
+text(xtext,ytext,labels=ProjLoc$ProjCode,cex=.6)
 ```
 
 ```{r}
@@ -76,7 +80,7 @@ ytext[3] = ytext[3]+.2
 
 # Plot the ProjLoc over the DEM
 points(ProjLoc$Longitude,ProjLoc$Latitude)
-text(xtext,ytext,labels=ProjLoc$ProjCode)
+text(xtext,ytext,labels=ProjLoc$ProjCode,cex=.6)
 ```
 
 ```{r}
@@ -92,24 +96,35 @@ tvals = extract(tmean,xy)
 # extract the values from the dem dataset
 pvals = extract(precip,xy)
 
-# Combine all new data into the dataframe
+# Combine all new data into the dataframe. Attempted to use melt(),
+# but the data type was always indicated to be "values" rather
+# than "numeric"
 rip$Elevation <- evals
 rip$Temp_aug <- tvals
 rip$Precp_aug <- pvals
 ```
 
-```{r}
+##Step 1 - Adding Covariates to the Mix
+```{r, fig.width=8,fig.height=4}
 # Exploratory data analysis
-summary(rip$Temp_aug)
-hist(rip$Temp_aug)
+layout(matrix(c(1,2), 1, 2, byrow = TRUE))
+hist(rip$Temp_aug, xlab="Temperature (C)",main="Histogram of August Temperature")
+boxplot(rip$Temp_aug)
 
-summary(rip$Elevation)
-hist(rip$Elevation)
+hist(rip$Elevation,xlab="Elevation (m)",main="Histogram of Elevation")
+boxplot(rip$Elevation)
 
-summary(rip$Precp_aug)
-hist(rip$Precp_aug)
+hist(rip$Precp_aug,xlab="Precipitation (mm)",main="Histogram of Precipitation")
+boxplot(rip$Precp_aug)
+eda <- data.frame(rip$Elevation,rip$Temp_aug,rip$Precp_aug,rip$Woody_DBH_cm,rip$htcm)
+pairs(eda)
+
+summary(rip)
 ```
+Based on the histograms, we can see that the data isn't normally distributed by any means. It seems that the new data-set is highly variable. By analyzing the scatter matrix, we may be able to come to the conclusion that temperature and precipitation are correlated, but there doesn't seem to be enough data to solidify this notion. There is a large amount of variability in the height and DBH when plotted against the three predictors as well. In the next step, we develop linear models utilizing each one of these predictors.
 
+##Step 2- Final Model Selection
+We begin by building the sets of linear models including our predictors: elevation, precipitation, temperature and latitude. Additionally, we include our "base" model to test against, in which we do not include any predictors:`Height~DBH*Genus`.
 
 ```{r}
 # Build Linear models for each predictor
@@ -124,9 +139,14 @@ psum <- summary.lm(lm.predp) # Best model
 tsum <- summary.lm(lm.predt)
 lsum <- summary.lm(lm.predl)
 bsum <- summary(lm.base)
+
+psum
 ```
 
-Step 3 - Predicting Carbon
+The final model chosen is the one including the precipitation predictor. While all the linear models yielded for similar r-squared values and p-values, the intercept of the precipitaiton variate resulted in a low standard error and high `Pr` value.
+
+##Step 3 - Predicting Carbon
+We apply the linear model chosen above to predict the height of the new data-set of trees given their genera, height in centimeters and precipitation values at the locations. We begin this process by extracting the data from the comma-separated-values file into a dataframe and then binding it with the precipitation values based on the lattitude and longitude location. Finally, we apply the `predict()` function on the new data using the precipitation-as-predictor linear model.
 ```{r}
 # Load new data to compare to predicted model
 data <- read.csv("new_data.csv",sep = ",",header = TRUE)
@@ -140,14 +160,19 @@ Precp_aug = extract(precip,xy)
 # Combine all new data into the dataframe
 data$Precp_aug <- Precp_aug
 
+# Plot the scatter plot from the original data-set
 with(rip,plot(Woody_DBH_cm,htcm))
+# insert a trend line based on the precipitation predictor linear 
+# model
 abline(lm.predp,col="red")
-#lm1=lm(htcm~Woody_DBH_cm*Genus,data=rip)
+# Apply the linear model to predict the height in cm of the new trees
 lm1.pred.y <-predict(lm.predp,data)
+# Plot these points over the old data
 points(data$Woody_DBH_cm,lm1.pred.y,col="blue",lwd=3)
 ```
 
-One hectare is equavalent to `10,000` squared meters. We extrapolate our calculation from `100` squared meters to estimate the volume of trees at one hectare. This is then multiplied by the density of carbon in order to calculate the Mg of C per hectare.
+**Results:**
+We can see from above scatter plot that the predicted values fit quite nicely into our original data, reassuring us that the model chosen was appropriate. We further utilize this model to calculate teh Mg of C per hectare of the new data-set. We know that one hectare is equivalent to `10,000` squared meters. We extrapolate our calculation from `100` squared meters to estimate the volume of trees at one hectare. This is then multiplied by the density of carbon in order to calculate the Mg of C per hectare.
 
 ```{r}
 # Calculating the carbon
@@ -160,6 +185,11 @@ MgCpH = (TVpH*.6)*.50/1e6 # The density of wood is about 0.6 g/cm^3 []
 
 The estimated biomass for the new site is approximately `r format(round(MgCpH, 3), nsmall = 3)` Mg of C per hectare.
 
+**Discussion:**
+This exercise of developing a linear model based upon factors and predictors is key in developing predictive model sets and validating models developed for data analytics. We began this assignment by first interpreting raster files that contained elevation, precipitation and temperature overlain on a map of California. We then plotted the four main study areas from the running data-set used in this course on each one of these maps. From there, we extracted the data from the raster files and utilized them for development of a predictive model, which was ultimately used for the prediction of tree height based on location, genus, DBH and precipitation.
+
+**Limitations:**
+As with any model, the limitation is almost always resolution. The raster data utilized here 
 
 **References**
 https://scied.ucar.edu/sites/default/files/images/long-content-page/Carbon%2BStored%2Bin%2BTrees%2Bby%2BSize-Table.pdf

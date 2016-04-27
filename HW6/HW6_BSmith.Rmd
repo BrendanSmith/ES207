@@ -77,9 +77,10 @@ Elev Mean & Clay
 
 ##Step 2 - Clustering and Clustering Output
 
-```{r}
+```{r,visibility=FALSE}
 # Heirarchical Clustering
 #dist using euclidean
+plot.new()
 rmdwhgm.dist<- dist(x = rmdwhgm[,rel_cols],method = "euclidean") #hclust using ward.D
 rmdwhgm.hc<- hclust(rmdwhgm.dist,method="ward.D")
 rect.hclust(rmdwhgm.hc,k=6)

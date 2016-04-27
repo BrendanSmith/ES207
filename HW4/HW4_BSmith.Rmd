@@ -116,7 +116,7 @@ rip.cov.htdbhg <-glm(rip$htcm~rip$Woody_DBH_cm*rip$Genus)
 summary(rip.cov.htdbhg)
 summary.lm(rip.cov.htdbhg)
 ```
-The next step is to generate an `ancovaplot()` for the two model formulations, with and without the interaction. We first plot the height as a 
+The next step is to generate an `ancovaplot()` for the two model formulations, with and without the interaction. We first plot the height as a function of the DBH and the factor Genus:
 
 ```{r}
 ancovaplot(htcm~Woody_DBH_cm+Genus,data=rip)
@@ -127,4 +127,4 @@ plot(ripsum)
 **Discussion:** Through the use of the coefficient of variation, we were able to run a one-way ANOVA, followed by checking for significant differences between sites using the Tukey test. By analyzing the summary and plot of these results, we can see that there is not significant differences in the variation of the height at these project codes. This is to say that height variability does not differ much between project codes. By utilizing the Tukey test, we are analyzing the differences between the means of the levels of the factor created by the one-way ANOVA. We can see that the difference between the means are relatively low, indicating that there is not a significant difference. Furthermore, if we look at the plot generated utilizing the Tukey data, we can see that all the project codes' differences in mean levels fall around zero, reinforcing our notion.
 
 
-**Limitations:** A limitaiton that was encountered in this homework assignment was the inability to utilize the `ancovaplot()` function. Though the input parameters seemed to be accurate, an error was always thrown.
+**Limitations:** A limitaiton that was encountered in this homework assignment was the learning how to use the `ancovaplot()` function properly. Though the input parameters seemed to be accurate, an error was always thrown until I realized that you must indicate the dataframe objects and then identify the dataframe individually.

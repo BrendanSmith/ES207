@@ -124,3 +124,13 @@ points(rmdwhgm$lon_dd,rmdwhgm$lat_dd,pch=19,col=rmdwhgm$km6)
 legend("topright",legend=levels(as.factor(rmdwhgm$km6)),col=1:length(rmdwhgm$km6),pch=19)
 ```
 
+
+##Step 3 - Principal Components Analysis (PCA)
+
+```{r}
+mdwhgm.pca <- prcomp(x = mdwhgm[,rel_cols], scale=TRUE, retx = TRUE, center = TRUE, scores=TRUE)
+
+summary(mdwhgm.pca)
+screeplot(mdwhgm.pca)
+plot(mdwhgm.pca, type="lines")
+```

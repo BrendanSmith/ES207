@@ -128,9 +128,49 @@ legend("topright",legend=levels(as.factor(rmdwhgm$km6)),col=1:length(rmdwhgm$km6
 ##Step 3 - Principal Components Analysis (PCA)
 
 ```{r}
-mdwhgm.pca <- prcomp(x = mdwhgm[,rel_cols], scale=TRUE, retx = TRUE, center = TRUE, scores=TRUE)
+rmdwhgm.pca <- prcomp(x = rmdwhgm[,rel_cols], scale=TRUE, retx = TRUE, center = TRUE, scores=TRUE)
 
-summary(mdwhgm.pca)
-screeplot(mdwhgm.pca)
-plot(mdwhgm.pca, type="lines")
+summary(rmdwhgm.pca)
+screeplot(rmdwhgm.pca)
+plot(rmdwhgm.pca, type="lines", main="PCA of Relevant Variables")
+title(xlab="Components")
 ```
+
+
+
+```{r}
+print(rmdwhgm.pca$rotation)
+# Which parameters are driving the variability in the meadow dataset 
+# (i.e., highest value)? Are these positive or negative loadings?
+```
+
+Driving the Loading:
+PC1: positive loading, driven by latitude, however, much negative loading is seen
+PC2: positive loading, edge complexity
+PC3: positive loading, slope percent
+PC4: positive loading, slope percent, negative loading, catch square km
+PC5: positive loading, catch square km
+
+```{r, fig.width=9, fig.height=9}
+# Cycle throught the most important axes using a for loop, going from
+# components 1 to 6
+j<-1:5
+for(i in j) {biplot(rmdwhgm.pca, choices=i:(i+1), cex=0.5, xlim=c(-0.1,0.2), ylim=c(- 0.1,0.2))}
+```
+
+```{r}
+pairs(rmdwhgm.pca$x[,1:3],col=rmdwhgm$km6)#colored by Kmeans group
+pairs(rmdwhgm.pca$x[,1:3],col=rmdwhgm$hc6)#colored by HClust group
+```
+
+##Step 4 - Contingency Analysis of Hydrogeomorphic Type
+
+```{r}
+chisq.test(table(rmdwhgm$hc6, rmdwhgm$km6))
+# Does there appear to be relationship based on counts? 
+# Is there a statistical relationship?
+```
+
+##Step 5 - Summarize the Data by National Forest
+
+"Could managing for climate change vulnerability by meadow type be simplified for each National Forest focusing on one meadow type? In other words, is there any consistency in those cross-tabulation data? Rely on the assigned reading to help form your answer.""

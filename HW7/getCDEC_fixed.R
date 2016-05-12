@@ -58,7 +58,8 @@ get.CDEC<-function(station,duration,sensor,start,end){
   z<-scan(what="character",n=1)
   if(z=="Y"){write.csv(data, file=paste(station,"_sensor-",sensor,"_",start,"_to_",end,".csv",sep=""),row.names=FALSE)
     print(paste("file downloaded and saved here: ",getwd(),sep="")) # show message
-  } else{
+    return(paste(station,"_sensor-",sensor,"_",start,"_to_",end,".csv",sep=""))
+    } else{
     cat("No csv written...output to dataframe only\n")}
   assign("cdec.dat",data,envir = .GlobalEnv) # print to workspace
   cat("All Finished! Available in current dataframe...\n")

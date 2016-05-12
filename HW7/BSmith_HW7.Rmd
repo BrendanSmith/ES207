@@ -1,0 +1,45 @@
+---
+title: 'Homework 7: Time & Space'
+author: "Brendan Smith"
+date: "May 11, 2016"
+output: html_document
+---
+
+**Objective Statement:**
+
+```{r,echo=false}
+# Load libraries
+source("getCDEC_fixed.R")
+source("getdailyUSGS.R")
+```
+
+**Methods:** We begin by exploratory data analysis of the time series data of discharge at the Michigan Bar USGS gaging station along the Cosumnes river. 
+
+**Data:**
+**Code:**
+
+##Step 1 - Data Retrieval and Troubleshooting##
+
+```{r}
+# grab CSV data from USGS Website
+# The getCDEC_fixed.R file was modified to return the filename upon
+# completion for easier data manipulation
+filename <- get.CDEC("MHB","D","41","2011/10/01","2012/09/30")
+Y # Enter Y at prompt to write csv file
+```
+
+```{r}
+# Call function created to pull USGS data. This also saves to workspace under "usgs.dat"
+get.dailyUSGS("11335000","00060","2011-10-01","2012-09-30")
+```
+
+##Step 2 - Formatting and EDA##
+
+
+##Step 3 - Time Series using Cosumnes River discharge##
+
+**Results:**
+
+**Discussion:**
+
+**Limitations:**

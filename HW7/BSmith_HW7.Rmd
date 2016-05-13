@@ -2,7 +2,7 @@
 title: 'Homework 7: Time & Space'
 author: "Brendan Smith"
 date: "May 11, 2016"
-output: html_document
+output: pdf_document
 ---
 
 **Objective Statement:**
@@ -30,13 +30,89 @@ Y # Enter Y at prompt to write csv file
 
 ```{r}
 # Call function created to pull USGS data. This also saves to workspace under "usgs.dat"
-get.dailyUSGS("11335000","00060","2011-10-01","2012-09-30")
+get.dailyUSGS("11335000","00060","1907-10-01","2012-09-30")
 ```
 
 ##Step 2 - Formatting and EDA##
 
+```{r}
+colnames(usgs.dat)[3:5] = c("datetime","discharge_cfs","dat_qvalue")
+
+usgs.dat$datetime = as.POSIXct(usgs.dat$datetime, tz = "America/Los_Angeles")
+#you must convert a factor to a character, then to double...
+usgs.dat$discharge_cfs = as.double(as.character(usgs.dat$discharge_cfs))
+
+```
+
+
+```{r}
+usgs.dat$discharge_afd <- usgs.dat$discharge_cfs/(60*60*24*2.3E5)
+summary(usgs.dat)
+plot(usgs.dat)
+```
 
 ##Step 3 - Time Series using Cosumnes River discharge##
+
+```{r}
+usgs.dat$year = as.numeric(substr(usgs.dat$datetime,1,4)) 
+usgs.dat$month = as.numeric(substr(usgs.dat$datetime,6,7)) 
+usgs.dat$day = as.numeric(substr(usgs.dat$datetime,10,11))
+#water year
+usgs.dat$wy = ifelse(usgs.dat$month > 9, usgs.dat$year + 1, usgs.dat$year)
+usgs.dat$wym = ifelse(usgs.dat$month > 9, usgs.dat$month - 9, usgs.dat$month + 3)
+```
+
+```{r}
+# Remove leap days
+usgs.dat = usgs.dat[!(usgs.dat$month == 2 & usgs.dat$day == 29),]
+```
+
+```{r}
+# Total discharge by month (using sum)
+usgs.dat.mo.cfs.sum = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), sum)), frequency=12,start=c(1907,1))
+
+# Mean discharge by month (using sum)
+usgs.dat.mo.cfs.mean = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), mean)), frequency=12,start=c(1907,1))
+
+# Max discharge by month (using sum)
+usgs.dat.mo.cfs.mean = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), max)), frequency=12,start=c(1907,1))
+```
+
+```{r}
+usgs.dat.yr.cfs.sum = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, sum)), frequency=365,start=c(1907,1)) 
+
+usgs.dat.yr.cfs.mean = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, mean)), frequency=365,start=c(1907,1)) 
+
+usgs.dat.yr.cfs.max = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, max)), frequency=365,start=c(1907,1)) 
+```
+
+
+```{r}
+# Plot of entire dataset
+plot.ts(usgs.dat.mo.cfs.sum, xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of 1907-2011')
+```
+
+```{r}
+# 1) the driest year on record
+# Plot of wettest year on record. Achieved with help from Lorenzo
+plot.ts(window(usgs.dat.mo.cfs.sum,start=which.max(usgs.dat.yr.cfs.sum),end=(which.max(usgs.dat.yr.cfs.sum)+1)), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph - 1983')  
+```
+
+```{r}
+# 2) the wettest year on record
+plot.ts(window(usgs.dat.mo.cfs.sum,start=which.min(usgs.dat.yr.cfs.sum),end=(which.min(usgs.dat.yr.cfs.sum)+1)), xlab= 'Year Index', ylab='Discharge (cfs)', main='Hydrograph - 1977') 
+
+```
+
+```{r}
+# 2) the year with the highest daily average discharge
+usgs.dat.day.cfs.max = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, max)), frequency=365,start=c(1907,1))
+
+plot.ts(window(usgs.dat.mo.cfs.mean,start=which.max(usgs.dat.day.cfs.max),end=(which.max(usgs.dat.day.cfs.max)+1)), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph - 1997') 
+```
+
+
+##Step 4 - Calculate Floods##
 
 **Results:**
 

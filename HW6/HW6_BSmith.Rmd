@@ -5,10 +5,13 @@ date: "April 25, 2016"
 output: pdf_document
 ---
 
-**Objective Statement:** 
+**Objective Statement:** The objective of this homework assignment is to become familiar with the process of data mining. Data mining is a process of discerning patterns of entire datasets, without always necessarily knowing the origin of the data. This can be both good and bad, as it can eliminate some bias from the data analysis process. We are expected to deliver a hydrogeomorphic model (HGM) that is validated using cluster analysis.
 
-**Methods:** 
+**Methods:** We will build an HGM given a set of new data, and a DEM from the previous homework assignment. 
 
+**Data:** We are given a data set taken from several meadows across the Sierra Nevada. They are stored in a database file (dbf), and need additional grooming before they can be utilized for analysis.
+
+**Code:**
 ```{r setup, include=FALSE}
 # Include libraries
 library(foreign)
@@ -38,11 +41,11 @@ mdwhgm$edge.comp = mdwhgm[,"EDGE_COMPL"]
 mdwhgm$clay = mdwhgm[,"ClayTot_r"]
 mdwhgm$soil.kf = mdwhgm[,"Kf"]
 
-# Additional meaningful columns
-
 ```
  
+**Results:**We begin by performing a quick EDA and then attempt to keep track of the relevant variables for data analysis.
 
+##Step 1 - EDA and Scatter-plot matrices
 ```{r}
 # EDA
 summary(mdwhgm)
@@ -54,29 +57,27 @@ rel_cols = c("area.sqkm", "catch.sqkm", "elev_m", "elev_r", "lat_dd", "lon_dd", 
 rmdwhgm <-mdwhgm[,rel_cols]
 
 ```
-
+We plot a scatter matrix to determine whether we have chosen enough relevant variables, and additionally analyze which variable pairs have the most variability and are highly correlated.
 ```{r, fig.width=9, fig.height=9}
 plot(rmdwhgm)
 ```
-
-Most Variability:
-Elev Mean & Lat
-Soil
-Lat
-Lon
-Elev mean
-
-Correlated:
-Soil & Clay
-Lat & Clay
-Lat & Elev Mean
-elev mean & Lon
-Edge & Elev Range
-Elev Mean & Lon
-Elev Mean & Clay
+Based on the plot, we determined that the most variability is found in the following pairs:
+-Elev Mean & Lat
+-Soil
+-Lat
+-Lon
+-Elev mean
+And the most correlated pairs are:
+-Soil & Clay
+-Lat & Clay
+-Lat & Elev Mean
+-elev mean & Lon
+-Edge & Elev Range
+-Elev Mean & Lon
+-Elev Mean & Clay
 
 ##Step 2 - Clustering and Clustering Output
-
+We now cluster the data using the `hclust()` function for hierarchical clustering. To use this method of clustering, we first find the euclidean distance. 
 ```{r,visibility=FALSE}
 # Heirarchical Clustering
 #dist using euclidean
@@ -86,6 +87,7 @@ rmdwhgm.hc<- hclust(rmdwhgm.dist,method="ward.D")
 rect.hclust(rmdwhgm.hc,k=6)
 ```
 
+We follow this up with k-means clustering via the `kmeans()` function. 
 
 ```{r}
 # k-means Clustering
@@ -136,8 +138,6 @@ plot(rmdwhgm.pca, type="lines", main="PCA of Relevant Variables")
 title(xlab="Components")
 ```
 
-
-
 ```{r}
 print(rmdwhgm.pca$rotation)
 # Which parameters are driving the variability in the meadow dataset 
@@ -173,4 +173,7 @@ chisq.test(table(rmdwhgm$hc6, rmdwhgm$km6))
 
 ##Step 5 - Summarize the Data by National Forest
 
-"Could managing for climate change vulnerability by meadow type be simplified for each National Forest focusing on one meadow type? In other words, is there any consistency in those cross-tabulation data? Rely on the assigned reading to help form your answer.""
+
+**Discussion:** Overall, a very in depth homework assignment. We were able to assemble an HGM from a dataset and verify it with Principal Component Analysis.
+
+**Limitations:** There really were no limitations during this assignment.

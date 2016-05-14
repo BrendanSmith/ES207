@@ -1,31 +1,32 @@
 ---
 title: 'Homework 7: Time & Space'
 author: "Brendan Smith"
-date: "May 11, 2016"
+date: "March 2016"
 output: pdf_document
 ---
 
-**Objective Statement:**
+**Objective Statement:** Flooding is an important phenomenon that recharges ground water in a natural and efficient manner; however, as with most things political, evidence and a dollar amount must be disseminated. The Cosumnes River is the last major undammed river of the Sierra Nevada, and runs through the central valley south of Sacramento. In 1907 the USGS placed a gaging station that logs daily flows in the Cosumnes river at the Michigan Bar (MHB) location. This assignment is designed to introduce time series data, extraction of time series data from an online source and time series data manipulation and plotting. 
 
-```{r,echo=false}
+```{r}
 # Load libraries
 source("getCDEC_fixed.R")
 source("getdailyUSGS.R")
 ```
 
-**Methods:** We begin by exploratory data analysis of the time series data of discharge at the Michigan Bar USGS gaging station along the Cosumnes river. 
+**Methods:** Data is extracted from the USGS website, where it was collected via a gaging station along the Cosumnes River at the MHB station. The time series data is converted to different units and interpretted using typical statistical tools such as mean, max and autocorrelation.
 
-**Data:**
-**Code:**
+**Data:** The data utilized in this assignment is downloaded directly from the CDEC and USGS websites. For a majority of the exercise, we are handling daily discharge levels of the Cosumnes River at the Michigan Bar gage. This data is assumed to be accurate and "gold standard".
+
+**Results:**
 
 ##Step 1 - Data Retrieval and Troubleshooting##
-
+We begin by exploratory data analysis of the time series data of discharge at the Michigan Bar USGS gaging station along the Cosumnes river. 
 ```{r}
 # grab CSV data from USGS Website
 # The getCDEC_fixed.R file was modified to return the filename upon
 # completion for easier data manipulation
 filename <- get.CDEC("MHB","D","41","2011/10/01","2012/09/30")
-Y # Enter Y at prompt to write csv file
+# Y # Enter Y at prompt to write csv file
 ```
 
 ```{r}
@@ -71,11 +72,11 @@ usgs.dat = usgs.dat[!(usgs.dat$month == 2 & usgs.dat$day == 29),]
 # Total discharge by month (using sum)
 usgs.dat.mo.cfs.sum = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), sum)), frequency=12,start=c(1907,1))
 
-# Mean discharge by month (using sum)
+# Mean discharge by month (using mean)
 usgs.dat.mo.cfs.mean = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), mean)), frequency=12,start=c(1907,1))
 
-# Max discharge by month (using sum)
-usgs.dat.mo.cfs.mean = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), max)), frequency=12,start=c(1907,1))
+# Max discharge by month (using max)
+usgs.dat.mo.cfs.max = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), max)), frequency=12,start=c(1907,1))
 ```
 
 ```{r}
@@ -95,26 +96,59 @@ plot.ts(usgs.dat.mo.cfs.sum, xlab= 'Year', ylab='Discharge (cfs)', main='Hydrogr
 ```{r}
 # 1) the driest year on record
 # Plot of wettest year on record. Achieved with help from Lorenzo
-plot.ts(window(usgs.dat.mo.cfs.sum,start=which.max(usgs.dat.yr.cfs.sum),end=(which.max(usgs.dat.yr.cfs.sum)+1)), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph - 1983')  
+plot.ts(window(usgs.dat.mo.cfs.sum,start=1983,end=1984), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of Driest - 1983')  
 ```
 
 ```{r}
 # 2) the wettest year on record
-plot.ts(window(usgs.dat.mo.cfs.sum,start=which.min(usgs.dat.yr.cfs.sum),end=(which.min(usgs.dat.yr.cfs.sum)+1)), xlab= 'Year Index', ylab='Discharge (cfs)', main='Hydrograph - 1977') 
+summary(usgs.dat.yr.cfs.max)
+
+plot.ts(window(usgs.dat.mo.cfs.sum,start=1977,end=1978), xlab= 'Year Index', ylab='Discharge (cfs)', main='Hydrograph of Wettest - 1977') 
 
 ```
 
 ```{r}
 # 2) the year with the highest daily average discharge
-usgs.dat.day.cfs.max = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, max)), frequency=365,start=c(1907,1))
+usgs.dat.day.cfs.mean = ts(usgs.dat$discharge_cfs, frequency=365,start=c(1907,1))
 
-plot.ts(window(usgs.dat.mo.cfs.mean,start=which.max(usgs.dat.day.cfs.max),end=(which.max(usgs.dat.day.cfs.max)+1)), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph - 1997') 
+plot.ts(window(usgs.dat.mo.cfs.mean,start=1997,end=1998), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of Highest Daily Average- 1997') 
 ```
+
+```{r}
+# Autocorrelation of raw data
+acf(usgs.dat.mo.cfs.mean)
+# Aucocorrelation of log transformed data
+temp = log10(usgs.dat.mo.cfs.mean)
+temp[mapply(is.infinite, temp)] <- 0 # Remove infinite values and replace with 0
+acf(temp)
+
+# STL Plot of raw data
+plot(stl(usgs.dat.mo.cfs.mean,s.window=12))
+# STL Plot of log transformed data
+plot(stl(temp,s.window=12))
+```
+
+From the autocorrelation function, we can easily see the seasonal structure of the discharge over multiple years. The patterns seen in both the raw and log transformed data indicate that the signal is periodic, due to it's sinusoidal nature.
 
 
 ##Step 4 - Calculate Floods##
 
-**Results:**
+```{r}
+# Plot the discharge and indicate the flood threshold
+thresh = 800
+plot.ts(usgs.dat.mo.cfs.mean)
+abline(h=thresh,col="yellow")
+
+# Find the flood events, this returns a Boolean
+usgs.dat$flood = usgs.dat$discharge_cfs >= 800
+
+usgs.dat.fldcnt = ts(as.vector(tapply(usgs.dat$flood,usgs.dat$wy,sum)),start=1907)
+plot.ts(usgs.dat.fldcnt, xlab= 'Year', ylab='Flood Day Counts')
+
+
+(sum(usgs.dat.fldcnt >= 100) / length(usgs.dat.fldcnt)) *100
+```
+
 
 **Discussion:**
 

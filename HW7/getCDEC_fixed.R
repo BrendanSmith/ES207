@@ -54,13 +54,11 @@ get.CDEC<-function(station,duration,sensor,start,end){
   end <- as.character(strptime(end,format="%Y/%m/%d"))
   
   ## ask if user wants to save to csv or use in dataframe
-  cat("\n","Write file to csv? Y or N","\n\n") # prompt 
-  z<-scan(what="character",n=1)
-  if(z=="Y"){write.csv(data, file=paste(station,"_sensor-",sensor,"_",start,"_to_",end,".csv",sep=""),row.names=FALSE)
+
+    write.csv(data, file=paste(station,"_sensor-",sensor,"_",start,"_to_",end,".csv",sep=""),row.names=FALSE)
     print(paste("file downloaded and saved here: ",getwd(),sep="")) # show message
     return(paste(station,"_sensor-",sensor,"_",start,"_to_",end,".csv",sep=""))
-    } else{
-    cat("No csv written...output to dataframe only\n")}
+
   assign("cdec.dat",data,envir = .GlobalEnv) # print to workspace
   cat("All Finished! Available in current dataframe...\n")
 }

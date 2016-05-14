@@ -150,6 +150,6 @@ plot.ts(usgs.dat.fldcnt, xlab= 'Year', ylab='Flood Day Counts')
 ```
 
 
-**Discussion:**
+**Discussion:** The results of this assignment clearly indicate that through the use of the autocorrelation function, the periodic nature of a time series signal can be teased out and become obvious. We learned to effectively manipulate time series data downloaded from CDEC and USGS servers. Those data-sets were then utilized to produce plots of specfic monthly values for the wettest year, driest year, and year with the highest daily discharge.
 
-**Limitations:**
+**Limitations:** Manipulating time series data in R is not as simple as it may seem. There are certain nuances to the function. Once these tricks are figured out, the time series data functions are relatively intuitive. Plotting using ggplot would probably provide better plotting functionality.

@@ -2,10 +2,10 @@
 title: "Homework 8 Time & Space"
 author: "Brendan Smith"
 date: "May 13, 2016"
-output: html_document
+output: pdf_document
 ---
 
-**Objective Statement:**
+**Objective Statement:** This assignment is an extension of Homework 8, in that we are still analyzing the Cosumnes River, but at a different location. Specifically, we are looking at the Triangle Floodplain north of the Acidental forest. We will be taking a new dataset and create a Shiny web app to easily share and interact with the data.
 
 ```{r}
 # Load libraries
@@ -13,11 +13,11 @@ library(maptools)
 library(akima)
 ```
 
-**Methods:**
+**Methods:** The methods for data analysis today are an introduction to shape files and importing them. We follow this with interpolation of the data across the entire area of study, and plotting this as heat map image with a contour line overlay. We then touch upon perspective 3D plots, and follow up with the combination of everything we've learned in this assignment to create a Shiny web App.
 
-**Data:** Triangle Floodplain north of Accidental Forest
+**Data:** The data utilized in this assignment was taken at the Triangle Floodplain north of Accidental Forest. We have access to several types of data including: turbidity, chlorophyl, latitude, longitude, elevation, etc. It isn't clear how these data are collected, so not much can be said on the accuracy of the set.
 
-**Code:**
+**Code:** A few new functions are introduced in this assignment. First is `readShapePoints()`, which allows the user to load a shape file into a dataframe. We begin by importing `allobs.shp` and performing a quick EDA:
 
 ```{r}
 # Read Shapefile
@@ -31,26 +31,36 @@ levels(as.factor(pt.shp$DateTime_)) # view individual dates
 unique(pt.shp$DateTime_) # TIMTOWTDI
 ```
 
+We notice that there are two forms of spatial information, lat/lon and X/Y. This is because lat/lon is truly positional data on a spherical coordinate system, so plotting on a flat plane is not ideal. There is instead another coordinate type, Universal Transverse Mercator coordinate system. This is a projection of the earth onto several flat planes across the earth, essentially breaking the world into a bunch of flat 2D planes. Each plane has a corresponding zone, 60 in total and this is the data we are seeing in the X and Y columns.
+
+Upon further inspection of the EDA, we notice that there are really only five days where data was collected. This makes things simple for us, as we can break the data into several data subsets.
+
+Another function introduced is `interp()`, which allows us to interpolate subsets of data (given there are 2D coordinates in the subset as well) into a raster image.
+
+**Results:**
 ##Step 1 - Spatial Interpolation##
+We start by subsetting the data for two dates:
 ```{r}
 # Create subets for 2/18 and 2/23
 pt.shp.Feb18 = pt.shp[pt.shp$DateTime_ == "2005-02-18",]
 pt.shp.Feb23 = pt.shp[pt.shp$DateTime_ == "2005-02-23",]
 ```
 
+We then apply a spatial interpolation for the February 18 dataset, focusing on temperature, dissolved oxygen, and chlorophyl:
+
 ```{r}
 tempinter.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$Temp,duplicate='mean')
 dointer.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$DO__,duplicate='mean')
 chlinter.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$Chlorophyl,duplicate='mean')
 image(tempinter.Feb18)
-contour(tempinter.Feb18,add=T) # using col=cm.colors(24) makes the contour lines
-# less visible
+contour(tempinter.Feb18,add=T)
+# note: using col=cm.colors(24) makes the contour lines less visible
 ```
 
 ##Step 2 - Perspective Plot##
-
+Now that we've mastered the `image()` and `contour()` plots, we are introduced to the perspective plots (3D plots). These are extremely straight forward to use, and angles are easily controlled.
 ```{r}
-
+# Create a layout matrix to organize the plots
 layout(matrix(c(1,2,3,4,5,6),2,3, byrow=TRUE))
 # Contour plots
 # Temperature
@@ -66,13 +76,13 @@ contour(chlinter.Feb18,add=T)
 persp(tempinter.Feb18, theta=-45, phi=50, col="lightblue", zlab="Temp C", xlab="UTM X (m)", ylab="UTM Y (m)")
 persp(dointer.Feb18, theta=-45, phi=50, col="green", zlab="DO", xlab="UTM X (m)", ylab="UTM Y (m)")
 persp(tempinter.Feb18, theta=-45, phi=50, col = "red", zlab="Chlorophyll", xlab="UTM X (m)", ylab="UTM Y (m)")
-
 ```
 
 ##Step 3 - Shiny Map##
+See attached `ui.R` and `server.R`.
 
-**Results:**
+**Discussion:** The methods of data analysis introduced in this assignment are, I believe, the most useful for data visualization. The Shiny Map makes it incredibly easy to share and manipulate the data, and I imagine there is a huge possibility to automate the update of server held data.
 
-**Discussion:**
+By examining the image and perspective plots that they differ only in the way three-dimensional data is presented. With the perspective plot, a wire-frame mesh is created and the data is visualized in 3D. The image plot creates a heat map of the values on a 2D plane. Both have their advantages; however, in the case of this dataset, I believe the image plot produces a cleaner visualization
 
-**Limitations:** I could not get the topo.colors, heat.colors, or cm.colors to work for the persp plots
+**Limitations:** I could not get the topo.colors, heat.colors, or cm.colors to work for the perspective plots. Another limitation I encountered was trying to utilize the elevation data from the dataset, it repeatedly crashed my R Studio when trying to interpolate.

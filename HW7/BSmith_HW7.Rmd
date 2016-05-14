@@ -18,7 +18,6 @@ source("getdailyUSGS.R")
 **Data:** The data utilized in this assignment is downloaded directly from the CDEC and USGS websites. For a majority of the exercise, we are handling daily discharge levels of the Cosumnes River at the Michigan Bar gage. This data is assumed to be accurate and "gold standard".
 
 **Results:**
-
 ##Step 1 - Data Retrieval and Troubleshooting##
 We begin by exploratory data analysis of the time series data of discharge at the Michigan Bar USGS gaging station along the Cosumnes river. 
 ```{r}
@@ -29,31 +28,35 @@ filename <- get.CDEC("MHB","D","41","2011/10/01","2012/09/30")
 # Y # Enter Y at prompt to write csv file
 ```
 
+We now call the newly created function `get.dailyUSGS()`, which pulls the data from the USGS server and places it into a dataframe called `usgs.dat`.
+
 ```{r}
 # Call function created to pull USGS data. This also saves to workspace under "usgs.dat"
 get.dailyUSGS("11335000","00060","1907-10-01","2012-09-30")
 ```
 
 ##Step 2 - Formatting and EDA##
-
+We manipulate the data to have meaningful column names, and change the date and time to a manageable format:
 ```{r}
+# Add meaningful names to columns
 colnames(usgs.dat)[3:5] = c("datetime","discharge_cfs","dat_qvalue")
 
+# Convert date and time to be in the PST timezone
 usgs.dat$datetime = as.POSIXct(usgs.dat$datetime, tz = "America/Los_Angeles")
 #you must convert a factor to a character, then to double...
 usgs.dat$discharge_cfs = as.double(as.character(usgs.dat$discharge_cfs))
-
 ```
 
-
+We follow this up with a quick EDA:
 ```{r}
+# EDA
 usgs.dat$discharge_afd <- usgs.dat$discharge_cfs/(60*60*24*2.3E5)
 summary(usgs.dat)
-plot(usgs.dat)
+plot(usgs.dat$discharge_cfs)
 ```
 
 ##Step 3 - Time Series using Cosumnes River discharge##
-
+We organize the data so the format is in water year (October-September):
 ```{r}
 usgs.dat$year = as.numeric(substr(usgs.dat$datetime,1,4)) 
 usgs.dat$month = as.numeric(substr(usgs.dat$datetime,6,7)) 
@@ -62,12 +65,13 @@ usgs.dat$day = as.numeric(substr(usgs.dat$datetime,10,11))
 usgs.dat$wy = ifelse(usgs.dat$month > 9, usgs.dat$year + 1, usgs.dat$year)
 usgs.dat$wym = ifelse(usgs.dat$month > 9, usgs.dat$month - 9, usgs.dat$month + 3)
 ```
-
+The leap days are then removed, for easer of further data manipulation:
 ```{r}
 # Remove leap days
 usgs.dat = usgs.dat[!(usgs.dat$month == 2 & usgs.dat$day == 29),]
 ```
 
+The total, mean and maximum discharges by month are calculated using the timeseries function. This conveniently places the data in a matrix with year as the row heading and month as the column heading.
 ```{r}
 # Total discharge by month (using sum)
 usgs.dat.mo.cfs.sum = ts(as.vector(tapply(usgs.dat$discharge_cfs, list(usgs.dat$wym, usgs.dat$wy), sum)), frequency=12,start=c(1907,1))
@@ -90,20 +94,20 @@ usgs.dat.yr.cfs.max = ts(as.vector(tapply(usgs.dat$discharge_cfs,usgs.dat$wy, ma
 
 ```{r}
 # Plot of entire dataset
-plot.ts(usgs.dat.mo.cfs.sum, xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of 1907-2011')
+plot.ts(usgs.dat.mo.cfs.sum, xlab= 'Water Year', ylab='Discharge (cfs)', main='Hydrograph of 1907-2011')
 ```
 
 ```{r}
 # 1) the driest year on record
 # Plot of wettest year on record. Achieved with help from Lorenzo
-plot.ts(window(usgs.dat.mo.cfs.sum,start=1983,end=1984), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of Driest - 1983')  
+plot.ts(window(usgs.dat.mo.cfs.sum,start=1983,end=1984), xlab= 'Water Year', ylab='Discharge (cfs)', main='Hydrograph of Driest - 1983')  
 ```
 
 ```{r}
 # 2) the wettest year on record
 summary(usgs.dat.yr.cfs.max)
 
-plot.ts(window(usgs.dat.mo.cfs.sum,start=1977,end=1978), xlab= 'Year Index', ylab='Discharge (cfs)', main='Hydrograph of Wettest - 1977') 
+plot.ts(window(usgs.dat.mo.cfs.sum,start=1977,end=1978), xlab= 'Water Year', ylab='Discharge (cfs)', main='Hydrograph of Wettest - 1977') 
 
 ```
 
@@ -111,7 +115,7 @@ plot.ts(window(usgs.dat.mo.cfs.sum,start=1977,end=1978), xlab= 'Year Index', yla
 # 2) the year with the highest daily average discharge
 usgs.dat.day.cfs.mean = ts(usgs.dat$discharge_cfs, frequency=365,start=c(1907,1))
 
-plot.ts(window(usgs.dat.mo.cfs.mean,start=1997,end=1998), xlab= 'Year', ylab='Discharge (cfs)', main='Hydrograph of Highest Daily Average- 1997') 
+plot.ts(window(usgs.dat.mo.cfs.mean,start=1997,end=1998), xlab= 'Water Year', ylab='Discharge (cfs)', main='Hydrograph of Highest Daily Average- 1997') 
 ```
 
 ```{r}

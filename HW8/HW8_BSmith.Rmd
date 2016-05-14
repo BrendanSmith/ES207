@@ -10,6 +10,7 @@ output: html_document
 ```{r}
 # Load libraries
 library(maptools)
+library(akima)
 ```
 
 **Methods:**
@@ -18,8 +19,60 @@ library(maptools)
 
 **Code:**
 
+```{r}
+# Read Shapefile
+pt.shp = readShapePoints("allobs.shp")
+
+# Perform EDA
+plot(pt.shp)
+head(pt.shp)
+summary(pt.shp)
+levels(as.factor(pt.shp$DateTime_)) # view individual dates
+unique(pt.shp$DateTime_) # TIMTOWTDI
+```
+
+##Step 1 - Spatial Interpolation##
+```{r}
+# Create subets for 2/18 and 2/23
+pt.shp.Feb18 = pt.shp[pt.shp$DateTime_ == "2005-02-18",]
+pt.shp.Feb23 = pt.shp[pt.shp$DateTime_ == "2005-02-23",]
+```
+
+```{r}
+tempinter.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$Temp,duplicate='mean')
+dointer.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$DO__,duplicate='mean')
+chlinter.Feb18 = interp(pt.shp.Feb18$X,pt.shp.Feb18$Y,pt.shp.Feb18$Chlorophyl,duplicate='mean')
+image(tempinter.Feb18)
+contour(tempinter.Feb18,add=T) # using col=cm.colors(24) makes the contour lines
+# less visible
+```
+
+##Step 2 - Perspective Plot##
+
+```{r}
+
+layout(matrix(c(1,2,3,4,5,6),2,3, byrow=TRUE))
+# Contour plots
+# Temperature
+image(tempinter.Feb18,main="Temperature")
+contour(tempinter.Feb18,add=T) 
+# Dissolved Oxygen
+image(dointer.Feb18,main="Dissolved Oxygen")
+contour(dointer.Feb18,add=T) 
+# Chlorophyll
+image(chlinter.Feb18,main ="Chlorophyll")
+contour(chlinter.Feb18,add=T) 
+
+persp(tempinter.Feb18, theta=-45, phi=50, col="lightblue", zlab="Temp C", xlab="UTM X (m)", ylab="UTM Y (m)")
+persp(dointer.Feb18, theta=-45, phi=50, col="green", zlab="DO", xlab="UTM X (m)", ylab="UTM Y (m)")
+persp(tempinter.Feb18, theta=-45, phi=50, col = "red", zlab="Chlorophyll", xlab="UTM X (m)", ylab="UTM Y (m)")
+
+```
+
+##Step 3 - Shiny Map##
+
 **Results:**
 
 **Discussion:**
 
-**Limitations:**
+**Limitations:** I could not get the topo.colors, heat.colors, or cm.colors to work for the persp plots
